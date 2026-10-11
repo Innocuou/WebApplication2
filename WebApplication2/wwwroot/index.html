@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Кинопоиск</title>
+</head>
+<body>
+
+    <h1>Кинопоиск</h1>
+
+    <input type="text" id="movieTitle"
+           placeholder="Название фильма">
+
+    <button onclick="searchMovie()">Поиск</button>
+
+    <div id="result"></div>
+
+    <script>async function searchMovie() {
+            const title = document.getElementById("movieTitle").value;
+            const result = document.getElementById("result");
+
+            if (!title.trim()) {
+                result.textContent = "Введите название фильма";
+                return;
+            }
+
+            result.textContent = "Загрузка...";
+
+            try {
+                const response = await fetch("/api/movie?title=" + encodeURIComponent(title));
+
+                const movie = await response.json();
+
+                if (!response.ok) {
+                    result.textContent = movie.error ||
+                        movie.detail || "Фильм не найден";
+                    return;
+                }
+
+                result.replaceChildren();
+
+                const heading = document.createElement("h2");
+                heading.textContent = movie.Title;
+                result.appendChild(heading);
+
+                if (movie.Poster && movie.Poster !== "N/A") {
+                    const poster = document.createElement("img");
+                    poster.src = movie.Poster;
+                    poster.alt = "Постер фильма";
+                    poster.width = 200;
+                    result.appendChild(poster);
+                }
+
+                const fields = [
+                    ["Год выпуска", movie.Year],
+                    ["Рейтинг", movie.imdbRating],
+                    ["Продолжительность", movie.Runtime],
+                    ["Режиссёр", movie.Director],
+                    ["Актёры", movie.Actors],
+                    ["Описание", movie.Plot]
+                ];
+
+                for (const [label, value] of fields) {
+                    const p = document.createElement("p");
+                    p.textContent = label + ": " + (value || "Нет данных");
+                    result.appendChild(p);
+                }
+            } catch (error) {
+                result.textContent = "Ошибка соединения с сервером";
+            }
+        }</script>
+
+</body>
+</html>
